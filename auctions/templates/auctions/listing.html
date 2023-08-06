@@ -1,0 +1,24 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    {% if message %}
+        <h4>{{ message }}</h4>
+    {% endif %}
+    <h2>Title: {{ listing.title }}</h2>
+    <h4>Description: {{ listing.description }}</h4>
+    <h4>Starting Bid: ${{ listing.startingBid }}</h4>
+    <h4><img src="{{ listing.imageUrl }}" alt="Product Image"></h4>
+    <h4>Category: {{ listing.category.name }}</h4>
+    <h4>Created By: {{ listing.seller.username }} - {{ listing.creationDate.day }}/{{ listing.creationDate.month }}/{{ listing.creationDate.year }}</h4>
+    {% if listing.active == True %}
+        <h4>Current Bid: ${{ listing.getListingBid }}</h4>
+        <form action="{% url 'listing' listing.id %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <h4><label for="listingBid">Bid:</label></h4>
+                <input class="form-control" type="text" name="listingBid" placeholder="$0.00" min="{{ listing.getListingBid }}" step="0.01">
+            </div>
+            <input class="btn btn-primary" type="submit" value="Create Bid">
+        </form>
+    {% endif %}
+{% endblock %}

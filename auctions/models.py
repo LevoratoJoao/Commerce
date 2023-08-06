@@ -2,6 +2,7 @@ from datetime import timezone
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from django.db.models import Max
 
 class User(AbstractUser, models.Model):
     pass
@@ -16,7 +17,6 @@ class AuctionListings(models.Model):
     title = models.CharField(max_length=64)
     description = models.TextField(max_length=500)
     startingBid = models.FloatField(default=0)
-    currentlyBid = models.FloatField(default=0)
     imageUrl = models.URLField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, related_name="category")
     active = models.BooleanField(default=True)
@@ -26,10 +26,20 @@ class AuctionListings(models.Model):
     buyer = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, related_name="buyer")
     watchlist = models.ManyToManyField(User, blank=True, related_name="watchlist")
 
+    def __str__(self):
+        return f"Title: {self.title}\nDescription: {self.description}\nCategory: {self.category}"
+
+    def getListingBid(self):
+        return self.listing.aggregate(Max("listingBid"))['listingBid__max']
+
+    def getUserBid(self):
+        last=self.user.last().name
+        return self.user.last().name
+
 class Bids(models.Model):
-    userBid = models.ForeignKey(User, on_delete=models.CASCADE)
-    listingBid = models.ForeignKey(AuctionListings, on_delete=models.CASCADE)
-    listPrice = models.FloatField(default=0)
+    userBid = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
+    auctionListing = models.ForeignKey(AuctionListings, on_delete=models.CASCADE, related_name="listing")
+    listingBid = models.FloatField(default=0)
     creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
 class Comments(models.Model):

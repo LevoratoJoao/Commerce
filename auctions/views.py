@@ -9,9 +9,9 @@ from .models import User, AuctionListings, Bids, Comments, Category
 
 
 def index(request):
-    products = AuctionListings.objects.all()
+    listings = AuctionListings.objects.all()
     return render(request, "auctions/index.html", {
-        'products': products
+        'listings': listings
     })
 
 def login_view(request):
@@ -33,11 +33,9 @@ def login_view(request):
     else:
         return render(request, "auctions/login.html")
 
-
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect(reverse("index"))
-
 
 def register(request):
     if request.method == "POST":
@@ -65,10 +63,28 @@ def register(request):
     else:
         return render(request, "auctions/register.html")
 
-def product(request, id):
-    product = AuctionListings.objects.get(pk=id)
-    return render(request, "auctions/product.html", {
-        "product": product
+def listing(request, id):
+    listing = AuctionListings.objects.get(pk=id)
+    if request.method == "POST":
+        user = request.user
+        listingBid = float(request.POST["listingBid"])
+        if listingBid <= listing.startingBid:
+            return render(request, "auctions/listing.html", {
+                "listing": listing,
+                "message": "Error: Your bid has to be greater than the starting bid"
+            })
+        listingMaxBid = listing.getListingBid()
+        if listingBid <= listingMaxBid:
+            return render(request, "auctions/listing.html", {
+                "listing": listing,
+                "message": "Error: Your bid has to be greater than the current bid"
+            })
+        bid = Bids.objects.create(userBid=user, auctionListing=listing, listingBid=listingBid)
+        bid.save()
+        listing.getUserBid()
+    return render(request, "auctions/listing.html", {
+        "listing": listing,
+        "message": None
     })
 
 @login_required(login_url='login')
@@ -76,12 +92,12 @@ def create_view(request):
     if request.method == "POST":
         title = request.POST["title"]
         description = request.POST["description"]
-        startingBid = request.POST["starting_bid"]
-        imageUrl = request.POST["image_url"]
+        startingBid = request.POST["startingBid"]
+        imageUrl = request.POST["imageUrl"]
         categoryId = request.POST["category"]
         category = Category.objects.get(pk=categoryId)
         seller = request.user
-        aucton = AuctionListings.objects.create(title=title, description=description, startingBid=startingBid, imageUrl=imageUrl, seller=seller, category = category, currentlyBid = startingBid)
+        aucton = AuctionListings.objects.create(title=title, description=description, startingBid=startingBid, imageUrl=imageUrl, seller=seller, category=category)
         aucton.save()
         return HttpResponseRedirect(reverse("index"))
     return render(request, "auctions/create.html", {
@@ -99,7 +115,6 @@ def category_view(request, name):
         "categoryName": category.name,
         "auctionListings": listing
     })
-
 
 def categories_view(request):
     return render(request, "auctions/categories.html", {

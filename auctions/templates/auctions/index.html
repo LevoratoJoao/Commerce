@@ -3,15 +3,15 @@
 {% block body %}
     <h2>Active Listings</h2>
 
-    {% for product in products reversed %}
+    {% for listing in listings reversed %}
         <ul>
             <li>
                 <div>
-                    <a href="{% url 'product' product.id %}">{{ product.title }}</a>
+                    <a href="{% url 'listing' listing.id %}">{{ listing.title }}</a>
                 </br>
-                    <img src="{{ product.imageUrl }}" alt="Product Image">
+                    <img src="{{ listing.imageUrl }}" alt="listing Image">
                 </br>
-                    {{ product.description }} &emsp; ${{ product.startingBid }}
+                    {{ listing.description }} &emsp; ${{ listing.bids.listingBid }}
                 </div>
             </li>
         </ul>

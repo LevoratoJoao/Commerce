@@ -6,9 +6,9 @@
     {% for auctionListing in auctionListings %}
         <li>
             <div>
-                <a href="{% url 'product' auctionListing.id %}">{{ auctionListing.title }}</a>
+                <a href="{% url 'listing' auctionListing.id %}">{{ auctionListing.title }}</a>
             </br>
-                <img src="{{ auctionListing.imageUrl }}" alt="Product Image">
+                <img src="{{ auctionListing.imageUrl }}" alt="Listing Image">
             </br>
                 {{ auctionListing.description }} &emsp; ${{ auctionListing.startingBid }}
             </div>
