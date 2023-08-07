@@ -5,6 +5,8 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 
+from django.db.models import Max
+
 from .models import User, AuctionListings, Bids, Comments, Category
 
 
@@ -66,22 +68,21 @@ def register(request):
 def listing(request, id):
     listing = AuctionListings.objects.get(pk=id)
     if request.method == "POST":
-        user = request.user
         listingBid = float(request.POST["listingBid"])
         if listingBid <= listing.startingBid:
             return render(request, "auctions/listing.html", {
                 "listing": listing,
                 "message": "Error: Your bid has to be greater than the starting bid"
             })
-        listingMaxBid = listing.getListingBid()
-        if listingBid <= listingMaxBid:
+        if listingBid <= listing.bid.listingBid:
             return render(request, "auctions/listing.html", {
                 "listing": listing,
                 "message": "Error: Your bid has to be greater than the current bid"
             })
-        bid = Bids.objects.create(userBid=user, auctionListing=listing, listingBid=listingBid)
+        bid = Bids(userBid=request.user, listingBid=float(request.POST["listingBid"]))
         bid.save()
-        listing.getUserBid()
+        listing.bid = bid
+        listing.save()
     return render(request, "auctions/listing.html", {
         "listing": listing,
         "message": None
@@ -97,7 +98,10 @@ def create_view(request):
         categoryId = request.POST["category"]
         category = Category.objects.get(pk=categoryId)
         seller = request.user
-        aucton = AuctionListings.objects.create(title=title, description=description, startingBid=startingBid, imageUrl=imageUrl, seller=seller, category=category)
+        # NEw
+        bid = Bids(userBid=request.user, listingBid=0)
+        bid.save()
+        aucton = AuctionListings.objects.create(title=title, description=description, startingBid=startingBid, imageUrl=imageUrl, seller=seller, category=category, bids=bid)
         aucton.save()
         return HttpResponseRedirect(reverse("index"))
     return render(request, "auctions/create.html", {

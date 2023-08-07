@@ -11,7 +11,7 @@
     <h4>Category: {{ listing.category.name }}</h4>
     <h4>Created By: {{ listing.seller.username }} - {{ listing.creationDate.day }}/{{ listing.creationDate.month }}/{{ listing.creationDate.year }}</h4>
     {% if listing.active == True %}
-        <h4>Current Bid: ${{ listing.getListingBid }}</h4>
+        <h4>Current Bid: ${{ listing.bid.listingBid }} By: {{ listing.bid.userBid.username }} </h4>
         <form action="{% url 'listing' listing.id %}" method="post">
             {% csrf_token %}
             <div class="form-group">

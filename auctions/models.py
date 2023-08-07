@@ -13,10 +13,16 @@ class Category(models.Model):
     def __str__(self):
         return f"{self.name}"
 
+class Bids(models.Model):
+    userBid = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
+    listingBid = models.FloatField(default=0)
+    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
 class AuctionListings(models.Model):
     title = models.CharField(max_length=64)
     description = models.TextField(max_length=500)
-    startingBid = models.FloatField(default=0)
+    startingBid = models.FloatField(default=0.0)
+    bid = models.ForeignKey(Bids, on_delete=models.CASCADE, related_name="bids", blank=True, null=True)
     imageUrl = models.URLField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, related_name="category")
     active = models.BooleanField(default=True)
@@ -27,20 +33,12 @@ class AuctionListings(models.Model):
     watchlist = models.ManyToManyField(User, blank=True, related_name="watchlist")
 
     def __str__(self):
-        return f"Title: {self.title}\nDescription: {self.description}\nCategory: {self.category}"
+        return f"Title: {self.title} Category: {self.category}"
 
-    def getListingBid(self):
-        return self.listing.aggregate(Max("listingBid"))['listingBid__max']
-
-    def getUserBid(self):
-        last=self.user.last().name
-        return self.user.last().name
-
-class Bids(models.Model):
-    userBid = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
-    auctionListing = models.ForeignKey(AuctionListings, on_delete=models.CASCADE, related_name="listing")
-    listingBid = models.FloatField(default=0)
-    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    # def getListingBid(self):
+    #     if self.listing.aggregate(Max("listingBid"))['listingBid__max'] == None:
+    #         return 0
+    #     return self.listing.aggregate(Max("listingBid"))['listingBid__max']
 
 class Comments(models.Model):
     userComment = models.ForeignKey(User, on_delete=models.CASCADE)
