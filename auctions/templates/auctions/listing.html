@@ -4,21 +4,61 @@
     {% if message %}
         <h4>{{ message }}</h4>
     {% endif %}
-    <h2>Title: {{ listing.title }}</h2>
-    <h4>Description: {{ listing.description }}</h4>
-    <h4>Starting Bid: ${{ listing.startingBid }}</h4>
-    <h4><img src="{{ listing.imageUrl }}" alt="Product Image"></h4>
-    <h4>Category: {{ listing.category.name }}</h4>
-    <h4>Created By: {{ listing.seller.username }} - {{ listing.creationDate.day }}/{{ listing.creationDate.month }}/{{ listing.creationDate.year }}</h4>
-    {% if listing.active == True %}
-        <h4>Current Bid: ${{ listing.bid.listingBid }} By: {{ listing.bid.userBid.username }} </h4>
-        <form action="{% url 'listing' listing.id %}" method="post">
-            {% csrf_token %}
-            <div class="form-group">
-                <h4><label for="listingBid">Bid:</label></h4>
-                <input class="form-control" type="text" name="listingBid" placeholder="$0.00" min="{{ listing.getListingBid }}" step="0.01">
-            </div>
-            <input class="btn btn-primary" type="submit" value="Create Bid">
-        </form>
-    {% endif %}
+    <div class="content">
+        <h2>Title: {{ listing.title }}</h2>
+        <h4>Description: {{ listing.description }}</h4>
+        <h4>Starting Bid: ${{ listing.startingBid }}</h4>
+        <h4><img src="{{ listing.imageUrl }}" alt="Product Image"></h4>
+        <h4>Category: {{ listing.category.name }}</h4>
+        <h4>Created By: {{ listing.seller.username }} - {{ listing.creationDate.day }}/{{ listing.creationDate.month }}/{{ listing.creationDate.year }}</h4>
+        {% if user.is_authenticated %}
+            {% if isWatching == False %}
+                <form action="{% url 'addWatchlist' listing.id %}" method="post">
+                    {% csrf_token %}
+                    <input class="btn btn-primary" type="submit" value="Add Witchlist">
+                </form>
+            {% else %}
+                <form action="{% url 'removeWatchlist' listing.id %}" method="post">
+                    {% csrf_token %}
+                    <input class="btn btn-primary" type="submit" value="Remove Witchlist">
+                </form>
+            {% endif %}
+        {% endif %}
+        {% if listing.active == True %}
+            {% if bid.bid %}
+                <h4>Current Bid: ${{ bid.bid }} - By: {{ bid.userBid.username }} </h4>
+            {% else %}
+                <h4>Current Bid: $0.00</h4>
+            {% endif %}
+            {% if user.is_authenticated %}
+                <form action="{% url 'bid' listing.id %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <h4><label for="listingBid">Bid:</label></h4>
+                        <input class="form-control" type="text" name="listingBid" placeholder="$0.00" min="{{ bid.listingBid }}" step="0.01">
+                    </div>
+                    <input class="btn btn-primary" type="submit" value="Create Bid">
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
+    <br/>
+    <div class="comment">
+        <h3>Comments:</h3>
+        <div class="user_comment">
+            {% for comment in comments %}
+                <p>{{ comment.userComment.username }} - {{ comment.creationDate.day }}/{{ comment.creationDate.month }}/{{ comment.creationDate.year }}</p>
+                <p>{{ comment.comment }}</p>
+            {% endfor %}
+        </div>
+        {% if user.is_authenticated %}
+            <form action="{% url 'comment' listing.id %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <textarea class="form-control" name="comment" placeholder="Comment"></textarea>
+                </div>
+                <input class="btn btn-primary" type="submit" value="Add comment">
+            </form>
+        {% endif %}
+    </div>
 {% endblock %}

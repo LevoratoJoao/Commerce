@@ -67,26 +67,36 @@ def register(request):
 
 def listing(request, id):
     listing = AuctionListings.objects.get(pk=id)
-    if request.method == "POST":
-        listingBid = float(request.POST["listingBid"])
-        if listingBid <= listing.startingBid:
-            return render(request, "auctions/listing.html", {
-                "listing": listing,
-                "message": "Error: Your bid has to be greater than the starting bid"
-            })
-        if listingBid <= listing.bid.listingBid:
-            return render(request, "auctions/listing.html", {
-                "listing": listing,
-                "message": "Error: Your bid has to be greater than the current bid"
-            })
-        bid = Bids(userBid=request.user, listingBid=float(request.POST["listingBid"]))
-        bid.save()
-        listing.bid = bid
-        listing.save()
+    bid = Bids.objects.filter(auctionListing=listing).last()
+    comments = Comments.objects.filter(listingComment=listing)
+    isWatching = request.user in listing.watchlist.all()
     return render(request, "auctions/listing.html", {
         "listing": listing,
-        "message": None
+        "bid": bid,
+        "comments": comments,
+        "isWatching": isWatching
     })
+
+def addBid(request, id):
+    if request.method == "POST":
+        listing = AuctionListings.objects.get(pk=id)
+        listingBid = float(request.POST["listingBid"])
+        listingMaxBid = listing.auctionListingBid.aggregate(Max("bid"))['bid__max']
+        if listingBid <= listing.startingBid or listingMaxBid == None:
+            return render(request, "auctions/listing.html", {
+                "listing": listing,
+                "message": "Error: Your bid has to be greater than the starting bid",
+                "bid": Bids.objects.filter(auctionListing=listing).last()
+            })
+        elif listingBid <= listingMaxBid:
+            return render(request, "auctions/listing.html", {
+                "listing": listing,
+                "message": "Error: Your bid has to be greater than the current bid",
+                "bid": Bids.objects.filter(auctionListing=listing).last()
+            })
+        bid = Bids.objects.create(userBid=request.user, auctionListing=listing, bid=listingBid)
+        bid.save()
+        return HttpResponseRedirect(reverse("listing", args=(id,)))
 
 @login_required(login_url='login')
 def create_view(request):
@@ -98,7 +108,7 @@ def create_view(request):
         categoryId = request.POST["category"]
         category = Category.objects.get(pk=categoryId)
         seller = request.user
-        # NEw
+        # New
         bid = Bids(userBid=request.user, listingBid=0)
         bid.save()
         aucton = AuctionListings.objects.create(title=title, description=description, startingBid=startingBid, imageUrl=imageUrl, seller=seller, category=category, bids=bid)
@@ -110,7 +120,10 @@ def create_view(request):
 
 @login_required(login_url='login')
 def watchlist_view(request):
-    return render(request, "auctions/watchlist.html")
+    watchlist = AuctionListings.objects.filter(watchlist=request.user)
+    return render(request, "auctions/watchlist.html", {
+        "watchlist": watchlist
+    })
 
 def category_view(request, name):
     category = Category.objects.get(name=name.capitalize())
@@ -124,3 +137,25 @@ def categories_view(request):
     return render(request, "auctions/categories.html", {
         "categories": Category.objects.all(),
     })
+
+@login_required(login_url='login')
+def addComment(request, id):
+    if request.method == "POST":
+        listing = AuctionListings.objects.get(pk=id)
+        commentContent = request.POST["comment"]
+        comment = Comments.objects.create(userComment=request.user, listingComment=listing, comment=commentContent)
+        comment.save()
+    return HttpResponseRedirect(reverse("listing", args=(id,)))
+
+@login_required(login_url='login')
+def addWatchlist(request, id):
+    listing = AuctionListings.objects.get(pk=id)
+    listing.watchlist.add(request.user)
+    listing.save()
+    return HttpResponseRedirect(reverse("listing", args=(id,)))
+
+@login_required(login_url='login')
+def removeWatchlist(request, id):
+    listing = AuctionListings.objects.get(pk=id)
+    listing.watchlist.remove(request.user)
+    return HttpResponseRedirect(reverse("listing", args=(id,)))

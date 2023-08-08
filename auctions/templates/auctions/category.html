@@ -3,7 +3,7 @@
 {% block body %}
 <ul>
     <h1>Category: {{ categoryName }}</h1>
-    {% for auctionListing in auctionListings %}
+    {% for auctionListing in auctionListings reversed %}
         <li>
             <div>
                 <a href="{% url 'listing' auctionListing.id %}">{{ auctionListing.title }}</a>

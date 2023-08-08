@@ -11,7 +11,7 @@
                 </br>
                     <img src="{{ listing.imageUrl }}" alt="listing Image">
                 </br>
-                    {{ listing.description }} &emsp; ${{ listing.bids.listingBid }}
+                    {{ listing.description }} &emsp; Current Price: ${{ listing.getListingBid }}
                 </div>
             </li>
         </ul>
