@@ -25,14 +25,12 @@ class AuctionListings(models.Model):
     saleDate = models.DateTimeField(null=True)
     seller = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, related_name="seller")
     buyer = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, related_name="buyer")
-    watchlist = models.ManyToManyField(User, blank=True, related_name="watchlist")
+    watchlist = models.ManyToManyField(User, blank=True, null=True, related_name="watchlist")
 
     def __str__(self):
         return f"Title: {self.title} Category: {self.category}"
 
     def getListingBid(self):
-        if self.auctionListingBid.aggregate(Max("bid"))['bid__max'] == None:
-            return 0
         return self.auctionListingBid.aggregate(Max("bid"))['bid__max']
 
 class Bids(models.Model):

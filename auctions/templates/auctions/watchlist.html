@@ -3,8 +3,8 @@
 {% block body %}
     <h2>Watchlist</h2>
     {% for listing in watchlist %}
-    <ul>
-        <li><a href="{% url 'listing' listing.id %}">{{ listing.title }}</a></li>
+    <ul class="list-group">
+        <li class="list-group-item"><a href="{% url 'listing' listing.id %}">{{ listing.title }}</a></li>
     </ul>
     {% endfor %}
 {% endblock body %}

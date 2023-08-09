@@ -1,19 +1,38 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-    <h2>Active Listings</h2>
-
-    {% for listing in listings reversed %}
-        <ul>
-            <li>
-                <div>
-                    <a href="{% url 'listing' listing.id %}">{{ listing.title }}</a>
-                </br>
-                    <img src="{{ listing.imageUrl }}" alt="listing Image">
-                </br>
-                    {{ listing.description }} &emsp; Current Price: ${{ listing.getListingBid }}
+    <ul class="nav">
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'displayListings' option="active" %}">Active Listings</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'displayListings' option="closed" %}">Closed Listings</a>
+        </li>
+    </ul>
+    <h2>{{ message }}</h2>
+    <div class="row">
+        {% for listing in listings reversed %}
+            {% comment %} <div class="col-sm-5"> {% endcomment %}
+                <div class="card mx-4 my-2" style="width: 18rem;">
+                    <img class="card-img-top" src="{{ listing.imageUrl }}" alt="listing Image">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ listing.title }}</h5>
+                        <p class="card-text">{{ listing.description }}</p>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% if listing.active == True %}
+                            <li class="list-group-item">Current Price: ${{ listing.getListingBid }}</li>
+                            <li class="list-group-item">Status: Active</li>
+                            {% else %}
+                            <li class="list-group-item">Sold for: ${{ listing.getListingBid }} to {{ listing.buyer }}</li>
+                            <li class="list-group-item">Status: Closed</li>
+                        {% endif %}
+                    </ul>
+                    <div class="card-body">
+                        <a href="{% url 'listing' listing.id %}" class="card-link">Listing Link</a>
+                    </div>
                 </div>
-            </li>
-        </ul>
-    {% endfor %}
+            {% comment %} </div> {% endcomment %}
+        {% endfor %}
+    </div>
 {% endblock %}

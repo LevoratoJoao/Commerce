@@ -1,3 +1,4 @@
+import datetime
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
@@ -13,7 +14,18 @@ from .models import User, AuctionListings, Bids, Comments, Category
 def index(request):
     listings = AuctionListings.objects.all()
     return render(request, "auctions/index.html", {
-        'listings': listings
+        'listings': listings,
+        'message': "All Listings"
+    })
+
+def displayListings(request, option):
+    if option == "active":
+        listings, message = AuctionListings.objects.filter(active=True), "Active Listings"
+    else:
+        listings, message = AuctionListings.objects.filter(active=False), "Inactive Listings"
+    return render(request, "auctions/index.html", {
+        'listings': listings,
+        'message': message
     })
 
 def login_view(request):
@@ -82,7 +94,7 @@ def addBid(request, id):
         listing = AuctionListings.objects.get(pk=id)
         listingBid = float(request.POST["listingBid"])
         listingMaxBid = listing.auctionListingBid.aggregate(Max("bid"))['bid__max']
-        if listingBid <= listing.startingBid or listingMaxBid == None:
+        if listingBid <= listing.startingBid:
             return render(request, "auctions/listing.html", {
                 "listing": listing,
                 "message": "Error: Your bid has to be greater than the starting bid",
@@ -108,11 +120,10 @@ def create_view(request):
         categoryId = request.POST["category"]
         category = Category.objects.get(pk=categoryId)
         seller = request.user
-        # New
-        bid = Bids(userBid=request.user, listingBid=0)
+        listing = AuctionListings.objects.create(title=title, description=description, startingBid=startingBid, imageUrl=imageUrl, seller=seller, category=category)
+        listing.save()
+        bid = Bids.objects.create(userBid=seller, auctionListing=listing, bid=0)
         bid.save()
-        aucton = AuctionListings.objects.create(title=title, description=description, startingBid=startingBid, imageUrl=imageUrl, seller=seller, category=category, bids=bid)
-        aucton.save()
         return HttpResponseRedirect(reverse("index"))
     return render(request, "auctions/create.html", {
         "categories": Category.objects.all()
@@ -148,6 +159,12 @@ def addComment(request, id):
     return HttpResponseRedirect(reverse("listing", args=(id,)))
 
 @login_required(login_url='login')
+def deleteComment(request, listingId, commentId):
+    comment = Comments.objects.get(pk=commentId)
+    comment.delete()
+    return HttpResponseRedirect(reverse("listing", args=(listingId,)))
+
+@login_required(login_url='login')
 def addWatchlist(request, id):
     listing = AuctionListings.objects.get(pk=id)
     listing.watchlist.add(request.user)
@@ -158,4 +175,13 @@ def addWatchlist(request, id):
 def removeWatchlist(request, id):
     listing = AuctionListings.objects.get(pk=id)
     listing.watchlist.remove(request.user)
+    return HttpResponseRedirect(reverse("listing", args=(id,)))
+
+@login_required(login_url='login')
+def closeListing(request, id):
+    listing = AuctionListings.objects.get(pk=id)
+    listing.active = False
+    listing.buyer = request.user
+    listing.saleDate = datetime.datetime.now().date()
+    listing.save()
     return HttpResponseRedirect(reverse("listing", args=(id,)))
