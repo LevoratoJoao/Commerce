@@ -23,55 +23,35 @@
                 </ul>
                 <div class="card-body">
                     {% if user.is_authenticated %}
-                        {% if isWatching == False %}
-                            {% if listing.active == True %}
-                                <form action="{% url 'addWatchlist' listing.id %}" method="post">
+                        {% if user.username == listing.seller.username and listing.active != False %}
+                            <form action="{% url 'closeListing' listing.id %}" method="post">
+                                {% csrf_token %}
+                                <input class="btn btn-danger" type="submit" value="Close Listing">
+                            </form>
+                        {% else %}
+                            {% if isWatching == False %}
+                                {% if listing.active == True %}
+                                    <form action="{% url 'addWatchlist' listing.id %}" method="post">
+                                        {% csrf_token %}
+                                        <input class="btn btn-success" type="submit" value="Add Witchlist">
+                                    </form>
+                                {% endif %}
+                            {% else %}
+                                <form action="{% url 'removeWatchlist' listing.id %}" method="post">
                                     {% csrf_token %}
-                                    <input class="btn btn-success" type="submit" value="Add Witchlist">
+                                    <input class="btn btn-danger" type="submit" value="Remove Witchlist">
                                 </form>
                             {% endif %}
-                        {% else %}
-                            <form action="{% url 'removeWatchlist' listing.id %}" method="post">
-                                {% csrf_token %}
-                                <input class="btn btn-danger" type="submit" value="Remove Witchlist">
-                            </form>
                         {% endif %}
                     {% endif %}
                 </div>
             </div>
         </div> <!-- End Listing Description Content -->
         <div class="col-md-6">
-            <div class="col-sm-9">
-                <!-- Listing Status Content -->
-                {% if user.username == listing.seller.username and listing.active != False %}
-                    <br/>
-                    <form action="{% url 'closeListing' listing.id %}" method="post">
-                        {% csrf_token %}
-                        <input class="btn btn-danger" type="submit" value="Close Listing">
-                    </form>
-                    <br/>
-                {% endif %}
-                {% if listing.active == False %}
-                    <span class="badge badge-pill badge-danger">Closed</span>
-                    <ul>
-                        <li style="display: inline-block; padding-left: 0;">
-                            Winner: {{ bid.userBid.username }}
-                        </li>
-                        <li style="display: inline-block;">
-                            Winning Bid: ${{ bid.bid }}
-                        </li>
-                        <li style="display: inline-block;">
-                            Endend at {{ listing.saleDate.day }}/{{ listing.saleDate.month }}/{{ listing.saleDate.year }}
-                        </li>
-                    </ul>
-                {% else %}
+            {% if listing.active == True %}
+                <div class="col-md-9"> <!-- Listing Bid Content -->
                     <span class="badge badge-pill badge-success">Active</span>
-                {% endif %}
-                <!-- End Listing Status Content -->
-                <hr/>
-            </div>
-            <div class="col-md-9"> <!-- Listing Bid Content -->
-                {% if listing.active == True %}
+                    <hr/>
                     <div class="card">
                         <div class="card-body">
                             <h4>
@@ -92,8 +72,21 @@
                             {% endif %}
                         </div>
                     </div>
-                {% endif %}
-            </div> <!-- End Listing Bid Content -->
+                </div> <!-- End Listing Bid Content -->
+            {% else %}
+                <div class="col-md-9"> <!-- Listing Status Content -->
+                    <span class="badge badge-pill badge-danger">Closed</span>
+                    <hr/>
+                    <div class="card text-center">
+                        <h5 class="card-header">Winner</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">{{ bid.userBid.username }}</li>
+                            <li class="list-group-item">Bid: ${{ bid.bid }}</li>
+                            <li class="list-group-item">Endend at {{ listing.saleDate.day }}/{{ listing.saleDate.month }}/{{ listing.saleDate.year }}</li>
+                        </ul>
+                    </div>
+                </div> <!-- End Listing Status Content -->
+            {% endif %}
             <br/>
             <div class="col-md-9"> <!-- Listing Comments Content -->
                 <div class="card">
@@ -103,8 +96,10 @@
                         <div class="user_comment">
                             {% for comment in comments %}
                                 <div class="card">
+                                    <div class="card-header">
+                                        {{ comment.userComment.username }} - {{ comment.creationDate.day }}/{{ comment.creationDate.month }}/{{ comment.creationDate.year }}
+                                    </div>
                                     <div class="card-body">
-                                        <p>{{ comment.userComment.username }} - {{ comment.creationDate.day }}/{{ comment.creationDate.month }}/{{ comment.creationDate.year }}</p>
                                         <p>{{ comment.comment }}</p>
                                         {% if user.username == comment.userComment.username %}
                                             <form action="{% url 'deleteComment' listing.id comment.id %}" method="post">

@@ -1,19 +1,28 @@
 {% extends 'auctions/layout.html' %}
 
 {% block body %}
-<ul>
-    <h1>Category: {{ categoryName }}</h1>
-    {% for auctionListing in auctionListings reversed %}
-        <li>
-            <div>
-                <a href="{% url 'listing' auctionListing.id %}">{{ auctionListing.title }}</a>
-            </br>
-                <img src="{{ auctionListing.imageUrl }}" alt="Listing Image">
-            </br>
-                {{ auctionListing.description }} &emsp; ${{ auctionListing.startingBid }}
+<h1>Category: {{ categoryName }}</h1>
+<div class="row">
+    {% for listing in listings reversed %}
+        <div class="card mx-4 my-2" style="width: 18rem;">
+            <img class="card-img-top" src="{{ listing.imageUrl }}" alt="listing Image">
+            <div class="card-body">
+                <h5 class="card-title">{{ listing.title }}</h5>
+                <p class="card-text">{{ listing.description }}</p>
             </div>
-
-        </li>
+            <ul class="list-group list-group-flush">
+                {% if listing.active == True %}
+                    <li class="list-group-item">Current Price: ${{ listing.getListingBid }}</li>
+                    <li class="list-group-item"><span class="badge badge-pill badge-success">Active</span></li>
+                {% else %}
+                    <li class="list-group-item">Sold for: ${{ listing.getListingBid }} to {{ listing.buyer }}</li>
+                    <li class="list-group-item"><span class="badge badge-pill badge-danger">Closed</span></li>
+                {% endif %}
+            </ul>
+            <div class="card-body">
+                <a href="{% url 'listing' listing.id %}" class="card-link">Listing Link</a>
+            </div>
+        </div>
     {% endfor %}
-</ul>
+</div>
 {% endblock %}
