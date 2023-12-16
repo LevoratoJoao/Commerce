@@ -94,17 +94,21 @@ def addBid(request, id):
         listing = AuctionListings.objects.get(pk=id)
         listingBid = float(request.POST["listingBid"])
         listingMaxBid = listing.auctionListingBid.aggregate(Max("bid"))['bid__max']
-        if listingBid <= listing.startingBid:
+        if listingBid <= listing.startingBid and listing.startingBid > listingMaxBid:
             return render(request, "auctions/listing.html", {
                 "listing": listing,
                 "message": "Error: Your bid has to be greater than the starting bid",
-                "bid": Bids.objects.filter(auctionListing=listing).last()
+                "bid": Bids.objects.filter(auctionListing=listing).last(),
+                "isWatching": request.user in listing.watchlist.all(),
+                "comments": Comments.objects.filter(listingComment=listing)
             })
-        elif listingBid <= listingMaxBid:
+        if listingBid <= listingMaxBid:
             return render(request, "auctions/listing.html", {
                 "listing": listing,
                 "message": "Error: Your bid has to be greater than the current bid",
-                "bid": Bids.objects.filter(auctionListing=listing).last()
+                "bid": Bids.objects.filter(auctionListing=listing).last(),
+                "isWatching": request.user in listing.watchlist.all(),
+                "comments": Comments.objects.filter(listingComment=listing)
             })
         bid = Bids.objects.create(userBid=request.user, auctionListing=listing, bid=listingBid)
         bid.save()
@@ -181,7 +185,7 @@ def removeWatchlist(request, id):
 def closeListing(request, id):
     listing = AuctionListings.objects.get(pk=id)
     listing.active = False
-    listing.buyer = request.user
+    listing.buyer = Bids.objects.filter(auctionListing=listing).last().userBid
     listing.saleDate = datetime.datetime.now().date()
     listing.save()
     return HttpResponseRedirect(reverse("listing", args=(id,)))
