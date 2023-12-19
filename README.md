@@ -31,7 +31,7 @@ python3 manage.py createsuperuser
 
 # Demo
 
-Here it is a simple usage example on YouTube: [TODO](https://youtu.be/U5ZnqcuSNv4).
+Here it is a simple usage example on YouTube: [Demo](https://youtu.be/U5ZnqcuSNv4).
 
 ## Models
 
